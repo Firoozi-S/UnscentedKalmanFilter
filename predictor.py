@@ -2,8 +2,6 @@ from typing import Any
 
 import numpy as np
 
-import commons
-
 BETA_0 = -0.59783
 H_0 = 13.406
 Gm_0 = 3.9860* (10**5)
@@ -11,9 +9,8 @@ R_0 = 6374
 
 class Predictor():
     def __init__(self):
-        """"""
+        """ Ballistic Missile Model """
         
-    
     def DistanceFromEarth(self, position):
         """ Distance from center of earth"""
         return np.sqrt(np.square(position[0]) + np.square(position[1]))
@@ -34,29 +31,34 @@ class Predictor():
         """ Drag force term"""
         return - self.BallisticCoefficient(aerodynamic_property) * np.exp((R_0 - self.DistanceFromEarth(position)) / H_0) * self.AbsoluteSpeed(velocity)
     
-    def __call__(self, state_space):
+    def __call__(self, state_space, noise_space):
         """ Given unscented transformed states, returns priori estimate of dynamic state"""
+        n_dim = np.size(state_space)
         position = (state_space[0], state_space[1])
         velocity = (state_space[2], state_space[3])
         aerodynamic_property = state_space[4]
 
-        state_dynamic = np.zeros((np.size(state_space), 1))
+        state_dynamic = np.zeros((n_dim, 1))
 
-        state_dynamic[0, :] = state_space[2]
+        state_dynamic[0, :] = state_space[2] + state_space[0]
 
-        state_dynamic[1, :] = state_space[3]
+        state_dynamic[1, :] = state_space[3] + state_space[1]
 
-        state_dynamic[2, :] = self.DragForce(position, velocity, aerodynamic_property) * state_space[2] + self.Gravitational(position) * state_space[0] + state_space[5]
+        state_dynamic[2, :] = (self.DragForce(position, velocity, aerodynamic_property) 
+                               * state_space[2] 
+                               + self.Gravitational(position) 
+                               * state_space[0] 
+                               + noise_space[0]
+                               + state_space[2])
         
-        state_dynamic[3, :] = self.DragForce(position, velocity, aerodynamic_property) * state_space[3] + self.Gravitational(position) * state_space[1] + state_space[6]
+        state_dynamic[3, :] = (self.DragForce(position, velocity, aerodynamic_property) 
+                               * state_space[3] 
+                               + self.Gravitational(position) 
+                               * state_space[1] 
+                               + noise_space[1]
+                               + state_space[3])
         
-        state_dynamic[4, :] = state_space[7]
-
-        state_dynamic[5, :] = state_space[5]
-
-        state_dynamic[6, :] = state_space[6]
-
-        state_dynamic[7, :] = state_space[7]
+        state_dynamic[4, :] = noise_space[-1]
 
         return state_dynamic
     

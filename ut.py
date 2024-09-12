@@ -2,7 +2,6 @@ import numpy as np
 
 from typing import Any
 
-from commons import INITIAL_COV, PROCESS_NOISE_COV, INITIAL_STATE, PROCESS_NOISE_MEAN
 
 ALPHA = 10**-3
 BETA = 2
@@ -15,9 +14,8 @@ def make_positive_definite(cov, epsilon = 1e-10):
 
 class UnscentedTransform:
     def __init__(self):
-
+        """ Unscented Transformation"""
         self.n_dim = 0
-
         return
     
     def ComputeSigmaPoints(self,
